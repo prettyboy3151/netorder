@@ -233,7 +233,7 @@
     <script>
         // 存储订单数据
         let orders = JSON.parse(localStorage.getItem('orders')) || [];
-        const DOMAIN = 'https://netorder.gangyunbao.com/netorder';
+        const DOMAIN = 'https://netorder.gangyunbao.com';
         
         // DOM元素
         const orderContent = document.getElementById('orderContent');
@@ -295,7 +295,7 @@
             
             // 生成结果
             const link = DOMAIN + '/order.html#order=' + orderId;
-            generatedText.innerHTML = `${content}\n\n订单链接: <a href="${link}" class="order-link" target="_blank">${link}</a>`;
+            generatedText.innerHTML = `${content}\n\n点击查看详情: <a href="${link}" class="order-link" target="_blank">${link}</a>`;
             
             // 显示结果
             resultContainer.classList.remove('hidden');
