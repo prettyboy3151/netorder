@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>派单系统</title>
+    <style>
+        * {
+            font-family: "Microsoft YaHei", sans-serif;
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background-color: #f5f5f5;
+            padding: 20px;
+        }
+        .container {
+            display: flex;
+            max-width: 1200px;
+            margin: 0 auto;
+            gap: 20px;
+        }
+        .left-panel, .right-panel {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        .left-panel {
+            flex: 1;
+        }
+        .right-panel {
+            flex: 2;
+        }
+        h2 {
+            margin-top: 0;
+            color: #333;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+        }
+        textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            min-height: 100px;
+            margin-bottom: 10px;
+            resize: vertical;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .copy-btn {
+            background-color: #2196F3;
+            margin-top: 10px;
+        }
+        .copy-btn:hover {
+            background-color: #0b7dda;
+        }
+        .order-list {
+            margin-top: 20px;
+            font-size: 13px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+        th, td {
+            padding: 10px 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
+        tr:hover {
+            background-color: #f5f5f5;
+        }
+        .status-pending {
+            color: #FF9800;
+        }
+        .status-assigned {
+            color: #4CAF50;
+        }
+        .status-deleted {
+            color: #F44336;
+        }
+        .action-btn {
+            padding: 5px 8px;
+            margin-right: 5px;
+            font-size: 12px;
+        }
+        .assign-btn {
+            background-color: #2196F3;
+        }
+        .delete-btn {
+            background-color: #F44336;
+        }
+        .order-detail-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0,0,0,0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .order-detail {
+            background-color: white;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.2);
+            width: 90%;
+            max-width: 600px;
+        }
+        .detail-item {
+            margin-bottom: 15px;
+            line-height: 1.6;
+        }
+        .detail-label {
+            font-weight: bold;
+            color: #666;
+            display: block;
+            margin-bottom: 5px;
+        }
+        .detail-content {
+            background-color: #f9f9f9;
+            padding: 12px;
+            border-radius: 4px;
+            border: 1px solid #eee;
+            white-space: pre-wrap;
+        }
+        .close-btn {
+            display: block;
+            width: 100%;
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #666;
+        }
+        .close-btn:hover {
+            background-color: #555;
+        }
+        .hidden {
+            display: none;
+        }
+        .result-content {
+            background-color: #f9f9f9;
+            padding: 15px;
+            border-radius: 4px;
+            border: 1px solid #eee;
+            margin-top: 15px;
+            white-space: pre-wrap;
+            line-height: 1.5;
+        }
+        .order-link {
+            color: #2196F3;
+            text-decoration: none;
+            word-break: break-all;
+        }
+        .order-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="left-panel">
+            <h2>请输入派单信息</h2>
+            <textarea id="orderContent" placeholder="请输入派单内容..."></textarea>
+            <button id="generateBtn">生成</button>
+            <div id="resultContainer" class="hidden">
+                <div class="result-content" id="generatedText"></div>
+                <button id="copyBtn" class="copy-btn">复制</button>
+            </div>
+        </div>
+        
+        <div class="right-panel">
+            <h2>已发布订单列表</h2>
+            <div class="order-list">
+                <table id="orderTable">
+                    <thead>
+                        <tr>
+                            <th>订单号</th>
+                            <th>订单信息</th>
+                            <th>发布时间</th>
+                            <th>发布人</th>
+                            <th>状态</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="orderTableBody">
+                        <!-- 订单列表将通过JavaScript动态生成 -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- 订单详情弹窗 (初始隐藏) -->
+    <div id="orderDetailModal" class="hidden">
+        <div class="order-detail-container">
+            <div class="order-detail">
+                <h2>订单详情</h2>
+                <div class="detail-item">
+                    <span class="detail-label">订单内容</span>
+                    <div class="detail-content" id="detailContent"></div>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">订单状态</span>
+                    <div id="detailStatus" class="detail-content"></div>
+                </div>
+                <button class="close-btn" id="closeDetail">关闭</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 存储订单数据
+        let orders = JSON.parse(localStorage.getItem('orders')) || [];
+        const DOMAIN = 'https://netorder.gangyunbao.com/netorder';
+        
+        // DOM元素
+        const orderContent = document.getElementById('orderContent');
+        const generateBtn = document.getElementById('generateBtn');
+        const resultContainer = document.getElementById('resultContainer');
+        const generatedText = document.getElementById('generatedText');
+        const copyBtn = document.getElementById('copyBtn');
+        const orderTableBody = document.getElementById('orderTableBody');
+        const orderDetailModal = document.getElementById('orderDetailModal');
+        const closeDetailBtn = document.getElementById('closeDetail');
+        const detailContent = document.getElementById('detailContent');
+        const detailStatus = document.getElementById('detailStatus');
+        
+        // 生成随机订单ID
+        function generateOrderId() {
+            return 'ORD-' + Date.now().toString().slice(-6) + Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+        }
+        
+        // 格式化日期时间
+        function formatDateTime(date) {
+            const options = { 
+                year: 'numeric', 
+                month: '2-digit', 
+                day: '2-digit', 
+                hour: '2-digit', 
+                minute: '2-digit', 
+                second: '2-digit',
+                hour12: false
+            };
+            return new Intl.DateTimeFormat('zh-CN', options).format(date).replace(/\//g, '-');
+        }
+        
+        // 生成订单
+        generateBtn.addEventListener('click', function() {
+            const content = orderContent.value.trim();
+            if (!content) {
+                alert('请输入派单内容');
+                return;
+            }
+            
+            const orderId = generateOrderId();
+            const now = new Date();
+            const publishTime = formatDateTime(now);
+            const publisher = '当前用户';
+            
+            // 创建新订单
+            const newOrder = {
+                id: orderId,
+                content: content,
+                time: publishTime,
+                publisher: publisher,
+                status: '派单中',
+                timestamp: now.getTime()
+            };
+            
+            // 添加到订单列表
+            orders.unshift(newOrder);
+            saveOrders();
+            
+            // 生成结果
+            const link = DOMAIN + '/order.html#order=' + orderId;
+            generatedText.innerHTML = `${content}\n\n订单链接: <a href="${link}" class="order-link" target="_blank">${link}</a>`;
+            
+            // 显示结果
+            resultContainer.classList.remove('hidden');
+            
+            // 更新订单列表
+            renderOrderList();
+            
+            // 清空输入框
+            orderContent.value = '';
+        });
+        
+        // 复制订单信息
+        copyBtn.addEventListener('click', function() {
+            const range = document.createRange();
+            range.selectNode(generatedText);
+            window.getSelection().removeAllRanges();
+            window.getSelection().addRange(range);
+            document.execCommand('copy');
+            window.getSelection().removeAllRanges();
+            
+            // 显示复制成功提示
+            const originalText = copyBtn.textContent;
+            copyBtn.textContent = '已复制';
+            setTimeout(() => {
+                copyBtn.textContent = originalText;
+            }, 2000);
+        });
+        
+        // 渲染订单列表
+        function renderOrderList() {
+            orderTableBody.innerHTML = '';
+            
+            orders.forEach(order => {
+                const row = document.createElement('tr');
+                
+                // 设置状态类名
+                let statusClass = '';
+                if (order.status === '派单中') statusClass = 'status-pending';
+                else if (order.status === '已派') statusClass = 'status-assigned';
+                else if (order.status === '已删除') statusClass = 'status-deleted';
+                
+                row.innerHTML = `
+                    <td>${order.id}</td>
+                    <td>${order.content}</td>
+                    <td>${order.time}</td>
+                    <td>${order.publisher}</td>
+                    <td class="${statusClass}">${order.status}</td>
+                    <td>
+                        ${order.status !== '已派' && order.status !== '已删除' ? 
+                            `<button class="action-btn assign-btn" data-id="${order.id}">设为已派</button>` : ''}
+                        ${order.status !== '已删除' ? 
+                            `<button class="action-btn delete-btn" data-id="${order.id}">删除</button>` : ''}
+                        <a href="${DOMAIN}/order.html#order=${order.id}" class="order-link" target="_blank">查看</a>
+                    </td>
+                `;
+                
+                orderTableBody.appendChild(row);
+            });
+            
+            // 添加操作按钮事件监听
+            document.querySelectorAll('.assign-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const orderId = this.getAttribute('data-id');
+                    updateOrderStatus(orderId, '已派');
+                });
+            });
+            
+            document.querySelectorAll('.delete-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const orderId = this.getAttribute('data-id');
+                    updateOrderStatus(orderId, '已删除');
+                });
+            });
+        }
+        
+        // 更新订单状态
+        function updateOrderStatus(orderId, newStatus) {
+            const order = orders.find(o => o.id === orderId);
+            if (order) {
+                order.status = newStatus;
+                saveOrders();
+                renderOrderList();
+            }
+        }
+        
+        // 显示订单详情
+        function showOrderDetail(orderId) {
+            const order = orders.find(o => o.id === orderId);
+            if (order) {
+                detailContent.textContent = order.content;
+                detailStatus.textContent = order.status;
+                
+                // 设置状态颜色
+                detailStatus.className = 'detail-content';
+                if (order.status === '派单中') detailStatus.classList.add('status-pending');
+                else if (order.status === '已派') detailStatus.classList.add('status-assigned');
+                else if (order.status === '已删除') detailStatus.classList.add('status-deleted');
+                
+                // 显示详情弹窗
+                orderDetailModal.classList.remove('hidden');
+            }
+        }
+        
+        // 关闭订单详情
+        closeDetailBtn.addEventListener('click', function() {
+            orderDetailModal.classList.add('hidden');
+        });
+        
+        // 保存订单数据到本地存储
+        function saveOrders() {
+            localStorage.setItem('orders', JSON.stringify(orders));
+        }
+        
+        // 处理URL哈希变化
+        function handleHashChange() {
+            const hash = window.location.hash;
+            const match = hash.match(/#order=(ORD-\w+)/);
+            
+            if (match) {
+                const orderId = match[1];
+                showOrderDetail(orderId);
+            }
+        }
+        
+        // 初始化
+        window.addEventListener('load', function() {
+            renderOrderList();
+            handleHashChange();
+        });
+        
+        window.addEventListener('hashchange', handleHashChange);
+    </script>
+</body>
+</html>
